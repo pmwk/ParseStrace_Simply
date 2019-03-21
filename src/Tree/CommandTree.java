@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class CommandTree {
 
-    private NodeCommandTree nodeCommandTree;
+    /*private NodeCommandTree nodeCommandTree;
     private ArrayList<NodeCommandTree> childs;
 
     public CommandTree(String root_value) {
@@ -73,7 +73,7 @@ public class CommandTree {
     }
 
     public NodeCommandTree getNoValue() {
-
+        return null;
     }
 
     /*public void addBranch(ArrayList<String> nodes, NodeCommandTree node) {
@@ -97,13 +97,15 @@ public class CommandTree {
         }
     }*/
 
-    public void print() {
+    /*public void print() {
         for (NodeCommandTree child : childs) {
             child.print("");
         }
-    }
+    }*/
 
     //получить список с одного уровня
     //получить список детей от одного узла
     // взаимодействие с результатом
+
+
 }

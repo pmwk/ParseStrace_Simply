@@ -1,6 +1,7 @@
 package src.StraceProtocol;
 
 import src.Tree.CommandTree;
+import src.Tree.NodeCommandTree;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -60,8 +61,8 @@ public class StraceProtocol {
         return names;
     } //возвращает список всех употребляемых имён для команд (статус = 1)
 
-    public CommandTree getTreeArgs (String command_name) {
-        CommandTree tree = new CommandTree(null);
+    public NodeCommandTree getTreeArgs (String command_name) {
+        NodeCommandTree tree = new NodeCommandTree("no value");
 
         ArrayList<Command> commands = getCommands_status();
         for (Command command : commands) {
@@ -69,9 +70,11 @@ public class StraceProtocol {
                 tree.addBranch(command.getArgs().getArgs(), command.getResult());
             }
         }
-        tree.print();
+        //tree.print();
         return tree;
     }
+
+
 }
 
 

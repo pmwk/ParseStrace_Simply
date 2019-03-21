@@ -9,8 +9,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import src.StraceProtocol.StraceProtocol;
-import src.Tree.CommandTree;
+import src.Tree.NodeCommandTree;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 public class FilterRow extends Pane {
@@ -34,36 +35,69 @@ public class FilterRow extends Pane {
         getChildren().addAll(parameters_root, settings_root, addFilters_root);
     }
 
-    private ComboBox<String> commands_cb = new ComboBox<>();
-    private ComboBox<String> results_cb = new ComboBox<>();
+    private StructLabCB commands = new StructLabCB("Command");
+    private StructLabCB results = new StructLabCB("Result");
     private HBox arguments_root = new HBox();
-    private CommandTree currentTree;
+    private NodeCommandTree currentTree;
 
     private void createParametersRoot() {
-        StructLabCB commands = new StructLabCB("Command");
         Set<String> list_commands = straceProtocol.getCommands_name();
         commands.setList(FXCollections.observableArrayList(list_commands));
         Action commands_action = (observableValue, oldValue, newValue) -> {
             currentTree = straceProtocol.getTreeArgs(newValue.toString());
-            fillArgs(0, currentTree.ge);
+            createFirstArg();
         };
         commands.setAction(commands_action);
 
 
-        StructLabCB arg = new StructLabCB("Argument");
+        parameters_root.getChildren().addAll(commands, arguments_root, results);
+    }
 
-
-
-        StructLabCB result  = new StructLabCB("Result");
-
+    private void createFirstArg() {
+        removeArgsMore(-1); // удаляем все сущесвтующие
+        StructLabCB_arg arg = new StructLabCB_arg("Argument 0");
+        arg.id = 0;
+        if (commands.getValueCB() != null) {
+            arg.setList(FXCollections.observableArrayList(currentTree.getChildsValues()));
+        }
         arguments_root.getChildren().addAll(arg);
-        parameters_root.getChildren().addAll(commands, arguments_root, result);
+        refreshResultCB();
+    }
+
+    private ArrayList<String> getCurrentArgs() {
+        ArrayList<String> args = new ArrayList<>();
+
+        for (int i = 0; i < arguments_root.getChildren().size(); i++) {
+            StructLabCB structLabCB = (StructLabCB) (arguments_root.getChildren().get(i));
+
+            args.add(structLabCB.getValue());
+
+        }
+        return args;
     }
 
     private void fillArgs(int index, ObservableList items) {
         if (index < arguments_root.getChildren().size()) {
-            ComboBox comboBox = (ComboBox) arguments_root.getChildren().get(index);
-            comboBox.setItems(items);
+            StructLabCB structLabCB = (StructLabCB) arguments_root.getChildren().get(index);
+            structLabCB.cb.setItems(items);
+        }
+    }
+
+    private void removeArgsMore(int id) {
+        int size = arguments_root.getChildren().size();
+
+        if (id + 1 < size) {
+            arguments_root.getChildren().remove(id + 1, size);
+        }
+
+    }
+
+    private void refreshResultCB () {
+        Set<String> results = currentTree.getAllExistResultsFrom(getCurrentArgs());
+        if (results != null) {
+            this.results.setList(FXCollections.observableArrayList(results));
+        } else {
+            System.out.println("results == null");
         }
     }
 
@@ -104,6 +138,18 @@ public class FilterRow extends Pane {
         public void setAction(Action action) {
             this.action = action;
         }
+
+        public String getValue() {
+            Object v = cb.getValue();
+            if (v == null) {
+                return null;
+            }
+            return cb.getValue().toString();
+        }
+
+        public Object getValueCB() {
+            return cb.getValue();
+        }
     }
 
     interface Action<T> {
@@ -111,4 +157,34 @@ public class FilterRow extends Pane {
         public void action(ObservableValue observableValue, T oldValue, T newValue);
 
     }
+
+    class StructLabCB_arg extends StructLabCB {
+
+        private int id;
+        Action args_action = (observableValue, oldValue, newValue) -> {
+            if (oldValue != null) {
+                removeArgsMore(id);
+            }
+            ArrayList<String> childsForNewArg = currentTree.getChildsFor(getCurrentArgs());
+            if (childsForNewArg != null && childsForNewArg.size() > 0) {
+                StructLabCB_arg newArg = new StructLabCB_arg("Argument " + (id + 1));
+                newArg.id = id + 1;
+                newArg.setList(FXCollections.observableArrayList(childsForNewArg));
+                arguments_root.getChildren().addAll(newArg);
+            }
+            refreshResultCB();
+        };
+
+
+        private StructLabCB_arg() {
+            super();
+        }
+
+        public StructLabCB_arg(String text) {
+            super(text);
+            setAction(args_action);
+        }
+    }
+
+
 }

@@ -13,23 +13,12 @@ public class Main extends Application {
         launch(args);
     }
 
-    static void printArray(String array[]) {
-        if (array == null) {
-            System.out.println("null");
-        } else if (array.length == 0) {
-            System.out.println("0 length");
-        } else {
-            for (String str : array) {
-                System.out.println(str);
-            }
-            System.out.println();
-        }
-    }
-
     @Override
     public void start(Stage stage) throws Exception {
+        src.Configuration.initConfiguration();
+
         Scene scene = new Scene(new StartView());
         stage.setScene(scene);
         stage.show();
-    }
+    } //открываем стартовое окно
 }

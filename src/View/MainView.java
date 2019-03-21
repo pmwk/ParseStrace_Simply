@@ -67,18 +67,29 @@ public class MainView extends Pane {
         args_col.setCellValueFactory(new PropertyValueFactory<>("args"));
         result_col.setCellValueFactory(new PropertyValueFactory<>("result"));
 
-        ObservableList<CommandProperty> commands = FXCollections.observableArrayList(CommandProperty.convert(protocol.getCommands_status()));
-        table.setItems(commands);
+        rearmTable();
     }
 
+    private static MainView mainView;
     public static void startMainView(StraceProtocol protocol) {
         Stage stage = new Stage();
-        MainView mainView = new MainView(protocol);
+        mainView = new MainView(protocol);
         Scene scene = new Scene(mainView);
         stage.setScene(scene);
         stage.show();
 
         mainView.prefWidthProperty().bind(stage.widthProperty());
         mainView.prefHeightProperty().bind(stage.heightProperty());
+    }
+
+    public void rearmTable() {
+        table.getItems().clear();
+        ObservableList<CommandProperty> commands = FXCollections.observableArrayList(CommandProperty.convert(protocol.getCommands_status()));
+        table.setItems(commands);
+
+    }
+
+    public static void refreshTable() {
+        mainView.rearmTable();
     }
 }

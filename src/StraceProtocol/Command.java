@@ -10,13 +10,13 @@ public class Command {
     private String name;
     private Args args;
     private String result;
-    private int status = 1;
+    private Status status = Status.NoN;
 
-    public int getStatus() {
+    public Status getStatus() {
         return status;
     }
 
-    public void setStatus(int status) {
+    public void setStatus(Status status) {
         this.status = status;
     }
 

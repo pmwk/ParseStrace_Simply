@@ -45,11 +45,11 @@ public class StraceProtocol {
     public ArrayList<Command> getCommands_status() {
         ArrayList<Command> commands_status = new ArrayList<>();
         for (Command command : commands) {
-            if (command.getStatus() == 1) {
+            if (command.getStatus() == Status.NoN) {
                 commands_status.add(command);
             }
         }
-        return commands;
+        return commands_status;
     } // возвращает список команд, учитывая статус (1 - будет добавлено, 0 - не будет добавлено)
 
     public Set<String> getCommands_name() {
@@ -74,6 +74,53 @@ public class StraceProtocol {
         return tree;
     }
 
+
+    public void refactorElementsByCommand(String command_name, ArrayList<String> args, String result, Status status, boolean inversion) {
+
+        for (Command command : commands) {
+            //System.out.println(command.getId());
+            boolean isFit = true;
+
+            if (command.getStatus() == Status.Hide) {
+                continue;
+            }
+
+            if (command_name != null) {
+                if (!command.getName().equals(command_name)) {
+                    isFit = false;
+                }
+            }
+
+            if (isFit && args != null) {
+                if (args.size() <= command.getArgs().getArgs().size()) {
+                    ArrayList<String> args_command = command.getArgs().getArgs();
+                    for (int i = 0; i < args.size(); i++) {
+                        if (args.get(i) != null) {
+                            if (!args.get(i).equals(args_command.get(i))) {
+                                isFit = false;
+                            }
+                        }
+                    }
+                } else {
+                    isFit = false;
+                }
+            }
+
+            if (isFit && result!= null) {
+                if (!result.equals(command.getResult())) {
+                    isFit = false;
+                }
+            }
+
+            if (inversion) {
+                isFit = !isFit;
+            }
+            if (isFit) {
+                command.setStatus(status);
+            }
+
+        }
+    }
 
 }
 

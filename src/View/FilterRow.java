@@ -3,11 +3,13 @@ package src.View;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import src.StraceProtocol.Status;
 import src.StraceProtocol.StraceProtocol;
 import src.Tree.NodeCommandTree;
 
@@ -31,8 +33,10 @@ public class FilterRow extends Pane {
     public FilterRow(StraceProtocol straceProtocol) {
         this.straceProtocol = straceProtocol;
         createParametersRoot();
+        createSettingsRoot();
 
-        getChildren().addAll(parameters_root, settings_root, addFilters_root);
+        root.getChildren().addAll(parameters_root, settings_root, addFilters_root);
+        getChildren().addAll(root);
     }
 
     private StructLabCB commands = new StructLabCB("Command");
@@ -41,8 +45,7 @@ public class FilterRow extends Pane {
     private NodeCommandTree currentTree;
 
     private void createParametersRoot() {
-        Set<String> list_commands = straceProtocol.getCommands_name();
-        commands.setList(FXCollections.observableArrayList(list_commands));
+        refreshCommandsList();
         Action commands_action = (observableValue, oldValue, newValue) -> {
             currentTree = straceProtocol.getTreeArgs(newValue.toString());
             createFirstArg();
@@ -64,17 +67,20 @@ public class FilterRow extends Pane {
         refreshResultCB();
     }
 
-    private ArrayList<String> getCurrentArgs() {
+    private ArrayList<String> getCurrentArgs_consistenly() {
         ArrayList<String> args = new ArrayList<>();
 
         for (int i = 0; i < arguments_root.getChildren().size(); i++) {
             StructLabCB structLabCB = (StructLabCB) (arguments_root.getChildren().get(i));
-
-            args.add(structLabCB.getValue());
+            if (structLabCB.getValue() != null) {
+                args.add(structLabCB.getValue());
+            } else {
+                break;
+            }
 
         }
         return args;
-    }
+    } //возвращает текущие выбранные аргументы. Если встречаем null, то он и дальнейшие аргументы не учитываются
 
     private void fillArgs(int index, ObservableList items) {
         if (index < arguments_root.getChildren().size()) {
@@ -93,7 +99,7 @@ public class FilterRow extends Pane {
     }
 
     private void refreshResultCB () {
-        Set<String> results = currentTree.getAllExistResultsFrom(getCurrentArgs());
+        Set<String> results = currentTree.getAllExistResultsFrom(getCurrentArgs_consistenly());
         if (results != null) {
             this.results.setList(FXCollections.observableArrayList(results));
         } else {
@@ -165,7 +171,7 @@ public class FilterRow extends Pane {
             if (oldValue != null) {
                 removeArgsMore(id);
             }
-            ArrayList<String> childsForNewArg = currentTree.getChildsFor(getCurrentArgs());
+            ArrayList<String> childsForNewArg = currentTree.getChildsFor(getCurrentArgs_consistenly());
             if (childsForNewArg != null && childsForNewArg.size() > 0) {
                 StructLabCB_arg newArg = new StructLabCB_arg("Argument " + (id + 1));
                 newArg.id = id + 1;
@@ -186,5 +192,77 @@ public class FilterRow extends Pane {
         }
     }
 
+
+    private void createSettingsRoot() {
+        StructLabCB mode = new StructLabCB("Mode");
+        mode.setList(FXCollections.observableArrayList(new String[]{"Consistently", "Globally"}));
+        mode.cb.valueProperty().setValue("Consistently");
+        mode.setAction((observableValue, oldValue, newValue) -> {
+            if (newValue.toString().equals("Globally")) {
+                System.out.println("Функционал в разработке");
+            }
+        });
+
+
+        VBox checkb_root = new VBox();
+        HBox rb_tg_root = new HBox();
+        RadioButton hidden_rb = new RadioButton("Hide");
+        hidden_rb.setSelected(true);
+        RadioButton deleted_rb = new RadioButton("Delete");
+
+        ToggleGroup rb_tg = new ToggleGroup();
+        rb_tg.getToggles().addAll(hidden_rb, deleted_rb);
+
+        CheckBox withoutArg_cb = new CheckBox("Without arguments");
+        rb_tg_root.getChildren().addAll(hidden_rb, deleted_rb);
+        checkb_root.getChildren().addAll(rb_tg_root, withoutArg_cb);
+
+        HBox but_root = new HBox();
+
+        Button apply_but = new Button("Apply");
+        Button reset_but = new Button("Reset");
+
+        but_root.getChildren().addAll(apply_but, reset_but);
+
+        ImageView tree_iv = new ImageView(new Image("Resource/treant_protector1.jpg"));
+        tree_iv.setFitHeight(90);
+        tree_iv.setFitWidth(90);
+
+        Label add_lab = new Label("+");
+        add_lab.setStyle("-fx-font-size: 45px;");
+
+        settings_root.getChildren().addAll(mode, checkb_root, but_root, tree_iv, add_lab);
+
+        apply_but.setOnMouseClicked(event -> {
+            boolean isConsistenly = mode.cb.getValue().equals("Consistently"); //последовательно аргументы применять, или глобально
+            boolean isHide = hidden_rb.isSelected();
+            boolean inversion = false;
+
+            if (commands.getValueCB() == null) {
+                System.out.println("НЕ ВЫБРАНА КОМАНДА, СОРРИ");
+            } else if (isConsistenly) {
+                ArrayList<String> args = getCurrentArgs_consistenly();
+                String result = "";
+                if (results.getValueCB() == null) {
+                    result = null;
+                } else {
+                    result = results.getValueCB().toString();
+                }
+
+                if (isHide) {
+                    straceProtocol.refactorElementsByCommand(commands.getValueCB().toString(), args, result, Status.Hide, inversion);
+                }
+                MainView.refreshTable();
+                refreshCommandsList();
+            } else {
+
+            }
+        });
+    }
+
+    private void refreshCommandsList () {
+        Set<String> list_commands = straceProtocol.getCommands_name();
+        commands.setList(FXCollections.observableArrayList(list_commands));
+    }
 
 }
